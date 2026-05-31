@@ -1,0 +1,193 @@
+# default_config.yaml
+# Central configuration for Tamil Entity Recognition System
+# All components are toggleable – disable any API/processor without affecting the pipeline.
+
+# --- LLM Configuration ---
+llm:
+  primary: "gemini"          # gemini | openai | claude | ollama
+  fallback: "ollama"
+  providers:
+    gemini:
+      enabled: true
+      api_key_env: "GEMINI_API_KEY"
+      model: "gemini-2.0-flash"
+    openai:
+      enabled: false
+      api_key_env: "OPENAI_API_KEY"
+      model: "gpt-4o"
+    claude:
+      enabled: false
+      api_key_env: "ANTHROPIC_API_KEY"
+      model: "claude-sonnet-4-20250514"
+    ollama:
+      enabled: true
+      base_url: "http://localhost:11434"
+      model: "llama3"
+
+# --- Input Processors ---
+input:
+  text:
+    enabled: true
+  image:
+    enabled: true
+    processors:
+      easyocr:
+        enabled: true
+        priority: 1
+        languages: ["ta", "en"]
+      google_vision:
+        enabled: false
+        priority: 2
+        api_key_env: "GOOGLE_VISION_API_KEY"
+      tesseract:
+        enabled: true
+        priority: 3
+        languages: ["tam", "eng"]
+  pdf:
+    enabled: true
+    processors:
+      pymupdf:
+        enabled: true
+        priority: 1
+      pdfplumber:
+        enabled: true
+        priority: 2
+  audio:
+    enabled: true
+    processors:
+      whisper:
+        enabled: true
+        priority: 1
+        model: "base"
+        language: "ta"
+      google_speech:
+        enabled: false
+        priority: 2
+        api_key_env: "GOOGLE_SPEECH_API_KEY"
+      azure_speech:
+        enabled: false
+        priority: 3
+  video:
+    enabled: true
+  url:
+    enabled: true
+
+# --- Transliteration ---
+transliteration:
+  confidence_threshold: 0.85
+  apis:
+    google_translate:
+      enabled: true
+      priority: 1
+    indic_transliteration:
+      enabled: true
+      priority: 2
+    ai4bharat:
+      enabled: false
+      priority: 3
+      api_key_env: "AI4BHARAT_API_KEY"
+
+# --- Entity Extraction ---
+extraction:
+  confidence_threshold: 0.85
+  use_ensemble: true
+  models:
+    spacy:
+      enabled: true
+      priority: 1
+      model_name: "xx_ent_wiki_sm"
+    stanza:
+      enabled: true
+      priority: 2
+      language: "ta"
+    google_nlp:
+      enabled: false
+      priority: 3
+      api_key_env: "GOOGLE_NLP_API_KEY"
+    llm_fallback:
+      enabled: true
+      priority: 99  # Only used when others fail
+
+# --- Research Sources ---
+research:
+  confidence_threshold: 0.85
+  source_timeout_seconds: 10
+  min_sources_required: 2
+  sources:
+    # Tier 1 — Always queried
+    wikipedia:
+      enabled: true
+      tier: 1
+      credibility: 0.95
+      languages: ["ta", "en"]
+    wikidata:
+      enabled: true
+      tier: 1
+      credibility: 0.98
+    dbpedia:
+      enabled: true
+      tier: 1
+      credibility: 0.90
+    # Tier 2 — Queried if Tier 1 insufficient
+    google_kg:
+      enabled: false
+      tier: 2
+      credibility: 0.90
+      api_key_env: "GOOGLE_KG_API_KEY"
+    web_search:
+      enabled: true
+      tier: 2
+      credibility: 0.70
+      engine: "duckduckgo"  # duckduckgo | google | bing
+    news:
+      enabled: false
+      tier: 2
+      credibility: 0.75
+      api_key_env: "NEWS_API_KEY"
+    # Tier 3 — Specialised
+    youtube:
+      enabled: false
+      tier: 3
+      credibility: 0.60
+    tamil_sources:
+      enabled: true
+      tier: 3
+      credibility: 0.85
+    government:
+      enabled: false
+      tier: 3
+      credibility: 0.95
+    academic:
+      enabled: false
+      tier: 3
+      credibility: 0.90
+    # Tier 4 — LLM
+    llm_knowledge:
+      enabled: true
+      tier: 4
+      credibility: 0.60
+
+# --- Explanation ---
+explanation:
+  min_word_count: 400
+  max_word_count: 600
+  hallucination_check: true
+  strict_retry: true
+
+# --- Response ---
+response:
+  formats: ["json"]  # json | html | pdf | markdown
+  include_sources: true
+  include_metrics: true
+
+# --- Database ---
+database:
+  sqlite_path: "data/tamil_entity.db"
+  chroma_path: "data/chroma_data"
+
+# --- Processing ---
+processing:
+  max_concurrent_entities: 10
+  request_timeout_seconds: 300
+  max_retries: 3
+  cache_ttl_days: 7

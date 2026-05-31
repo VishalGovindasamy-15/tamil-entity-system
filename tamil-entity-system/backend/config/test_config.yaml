@@ -1,0 +1,173 @@
+# test_config.yaml
+# Minimal config using ONLY free / local APIs for testing.
+
+llm:
+  primary: "ollama"
+  fallback: "ollama"
+  providers:
+    gemini:
+      enabled: false
+      api_key_env: "GEMINI_API_KEY"
+      model: "gemini-2.0-flash"
+    openai:
+      enabled: false
+      api_key_env: "OPENAI_API_KEY"
+      model: "gpt-4o"
+    claude:
+      enabled: false
+      api_key_env: "ANTHROPIC_API_KEY"
+      model: "claude-sonnet-4-20250514"
+    ollama:
+      enabled: true
+      base_url: "http://localhost:11434"
+      model: "llama3"
+
+input:
+  text:
+    enabled: true
+  image:
+    enabled: true
+    processors:
+      easyocr:
+        enabled: true
+        priority: 1
+        languages: ["ta", "en"]
+      google_vision:
+        enabled: false
+        priority: 2
+      tesseract:
+        enabled: true
+        priority: 3
+        languages: ["tam", "eng"]
+  pdf:
+    enabled: true
+    processors:
+      pymupdf:
+        enabled: true
+        priority: 1
+      pdfplumber:
+        enabled: true
+        priority: 2
+  audio:
+    enabled: true
+    processors:
+      whisper:
+        enabled: true
+        priority: 1
+        model: "base"
+        language: "ta"
+      google_speech:
+        enabled: false
+        priority: 2
+      azure_speech:
+        enabled: false
+        priority: 3
+  video:
+    enabled: true
+  url:
+    enabled: true
+
+transliteration:
+  confidence_threshold: 0.85
+  apis:
+    google_translate:
+      enabled: true
+      priority: 1
+    indic_transliteration:
+      enabled: true
+      priority: 2
+    ai4bharat:
+      enabled: false
+      priority: 3
+
+extraction:
+  confidence_threshold: 0.85
+  use_ensemble: true
+  models:
+    spacy:
+      enabled: true
+      priority: 1
+      model_name: "xx_ent_wiki_sm"
+    stanza:
+      enabled: false
+      priority: 2
+      language: "ta"
+    google_nlp:
+      enabled: false
+      priority: 3
+    llm_fallback:
+      enabled: true
+      priority: 99
+
+research:
+  confidence_threshold: 0.85
+  source_timeout_seconds: 10
+  min_sources_required: 1
+  sources:
+    wikipedia:
+      enabled: true
+      tier: 1
+      credibility: 0.95
+      languages: ["ta", "en"]
+    wikidata:
+      enabled: true
+      tier: 1
+      credibility: 0.98
+    dbpedia:
+      enabled: false
+      tier: 1
+      credibility: 0.90
+    google_kg:
+      enabled: false
+      tier: 2
+      credibility: 0.90
+    web_search:
+      enabled: true
+      tier: 2
+      credibility: 0.70
+      engine: "duckduckgo"
+    news:
+      enabled: false
+      tier: 2
+      credibility: 0.75
+    youtube:
+      enabled: false
+      tier: 3
+      credibility: 0.60
+    tamil_sources:
+      enabled: false
+      tier: 3
+      credibility: 0.85
+    government:
+      enabled: false
+      tier: 3
+      credibility: 0.95
+    academic:
+      enabled: false
+      tier: 3
+      credibility: 0.90
+    llm_knowledge:
+      enabled: true
+      tier: 4
+      credibility: 0.60
+
+explanation:
+  min_word_count: 400
+  max_word_count: 600
+  hallucination_check: true
+  strict_retry: false
+
+response:
+  formats: ["json"]
+  include_sources: true
+  include_metrics: true
+
+database:
+  sqlite_path: "data/test_entity.db"
+  chroma_path: "data/test_chroma"
+
+processing:
+  max_concurrent_entities: 5
+  request_timeout_seconds: 60
+  max_retries: 1
+  cache_ttl_days: 1
