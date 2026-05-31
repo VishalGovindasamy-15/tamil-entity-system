@@ -125,6 +125,7 @@ class SystemState(TypedDict):
     detected_scripts: List[str]
     transliteration_map: Dict[str, str]
     transliteration_confidence: Dict[str, float]
+    candidate_entities: List[Dict[str, Any]]  # From Discovery module
     entities: List[Dict[str, Any]]
     entity_knowledge: Dict[str, Dict[str, Any]]
     explanations: Dict[str, Dict[str, Any]]

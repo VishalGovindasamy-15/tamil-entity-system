@@ -33,7 +33,10 @@ class SystemState(TypedDict):
     transliteration_map: Dict[str, str]
     transliteration_confidence: Dict[str, float]
 
-    # Entities (output of Extraction module)
+    # Candidate Entities (output of Discovery module — novel/unknown entity candidates)
+    candidate_entities: List[Dict[str, Any]]
+
+    # Entities (output of Extraction module — merges NER + candidates)
     entities: List[Dict[str, Any]]
 
     # Knowledge (output of Research module)
@@ -93,6 +96,7 @@ def create_initial_state(
         detected_scripts=[],
         transliteration_map={},
         transliteration_confidence={},
+        candidate_entities=[],
         entities=[],
         entity_knowledge={},
         explanations={},

@@ -15,6 +15,7 @@ def test_create_initial_state_returns_all_keys():
         "current_stage", "processing_status",
         "raw_text", "normalized_text", "detected_language", "detected_scripts",
         "transliteration_map", "transliteration_confidence",
+        "candidate_entities",
         "entities", "entity_knowledge", "explanations",
         "processing_steps", "api_calls_made", "cache_hits", "sources_accessed",
         "errors", "warnings", "stage_timings",

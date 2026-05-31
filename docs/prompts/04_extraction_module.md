@@ -29,9 +29,11 @@ You are building the **Entity Extraction Module** for a Tamil Entity Recognition
 
 ### YOUR DATA CONTRACT
 
-**What you receive (set by Transliteration module):**
+**What you receive (set by Transliteration + Discovery modules):**
 ```python
 state['normalized_text']  # Tamil/English text with all Roman Tamil already converted
+state['candidate_entities']  # List of candidate entity dicts from Discovery module (may be empty [])
+# Each candidate: {"text": "...", "candidate_type": "UNKNOWN", "confidence": 0.5, "discovery_methods": [...]}
 ```
 
 **What you MUST set:**

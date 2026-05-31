@@ -66,6 +66,19 @@ tamil-entity-system/
 │   │   │   ├── transliterators.py   # Google Translate, Indic, AI4Bharat APIs
 │   │   │   └── consensus.py         # Multi-API consensus logic
 │   │   │
+│   │   ├── discovery/                # NEW: Candidate Entity Discovery
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py             # CandidateDiscoveryAgent
+│   │   │   ├── strategies/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── dictionary_checker.py
+│   │   │   │   ├── compound_detector.py
+│   │   │   │   ├── rare_word.py
+│   │   │   │   ├── noun_phrase.py
+│   │   │   │   └── context_pattern.py
+│   │   │   ├── tamil_wordlist.py     # Tamil dictionary/wordlist loader
+│   │   │   └── candidate_merger.py   # Deduplicates and scores candidates
+│   │   │
 │   │   ├── extraction/
 │   │   │   ├── __init__.py
 │   │   │   ├── agent.py             # EntityExtractionAgent
@@ -137,6 +150,7 @@ tamil-entity-system/
 │   │   │   ├── test_core/
 │   │   │   ├── test_input/
 │   │   │   ├── test_transliteration/
+│   │   │   ├── test_discovery/
 │   │   │   ├── test_extraction/
 │   │   │   ├── test_research/
 │   │   │   ├── test_explanation/
@@ -145,6 +159,7 @@ tamil-entity-system/
 │   │   │   ├── test_core_module.py
 │   │   │   ├── test_input_module.py
 │   │   │   ├── test_transliteration_module.py
+│   │   │   ├── test_discovery_module.py
 │   │   │   ├── test_extraction_module.py
 │   │   │   ├── test_research_module.py
 │   │   │   ├── test_explanation_module.py
@@ -217,7 +232,10 @@ class SystemState(TypedDict):
     transliteration_map: Dict[str, str]
     transliteration_confidence: Dict[str, float]
 
-    # Entities (output of Extraction module)
+    # Candidate Entities (output of Discovery module — novel/unknown entity candidates)
+    candidate_entities: List[Dict[str, Any]]
+
+    # Entities (output of Extraction module — merges NER + candidates)
     entities: List[Dict[str, Any]]
 
     # Knowledge (output of Research module)
@@ -508,13 +526,16 @@ Every processor/source/model checks `enabled: true/false` before running. If dis
 
 ## Data Flow
 
+### Pipeline Flow
+
 ```mermaid
 graph TD
     A[User Input] --> B[FastAPI Server]
     B --> C[Pipeline Orchestrator]
     C --> D[Input Module]
     D -->|raw_text| E[Transliteration Module]
-    E -->|normalized_text| F[Extraction Module]
+    E -->|normalized_text| CD[Candidate Discovery]
+    CD -->|candidate_entities| F[Extraction Module]
     F -->|entities list| G[Research Module]
     G -->|entity_knowledge| H[Explanation Module]
     H -->|explanations| I[Response Module]
@@ -532,6 +553,52 @@ graph TD
 
     M[(ChromaDB)] <--> E
     M <--> G
+
+    style CD fill:#f9a825,stroke:#f57f17,color:#000
+```
+
+### SystemState Data Flow Per Module
+
+```mermaid
+graph LR
+    subgraph INPUT["Input Module"]
+        I1["Reads: input_type, input_content"]
+        I2["Sets: raw_text, detected_language, detected_scripts"]
+    end
+
+    subgraph TRANSLIT["Transliteration Module"]
+        T1["Reads: raw_text, detected_scripts"]
+        T2["Sets: normalized_text, transliteration_map, transliteration_confidence"]
+    end
+
+    subgraph DISCOVERY["Candidate Discovery"]
+        CD1["Reads: normalized_text"]
+        CD2["Sets: candidate_entities"]
+    end
+
+    subgraph EXTRACT["Extraction Module"]
+        E1["Reads: normalized_text, candidate_entities"]
+        E2["Sets: entities"]
+    end
+
+    subgraph RESEARCH["Research Module"]
+        R1["Reads: entities"]
+        R2["Sets: entity_knowledge"]
+    end
+
+    subgraph EXPLAIN["Explanation Module"]
+        X1["Reads: entities, entity_knowledge"]
+        X2["Sets: explanations"]
+    end
+
+    subgraph RESPONSE["Response Module"]
+        S1["Reads: entities, entity_knowledge, explanations"]
+        S2["Sets: final_response"]
+    end
+
+    INPUT --> TRANSLIT --> DISCOVERY --> EXTRACT --> RESEARCH --> EXPLAIN --> RESPONSE
+
+    style DISCOVERY fill:#f9a825,stroke:#f57f17,color:#000
 ```
 
 ---
@@ -545,6 +612,7 @@ Build and test in this order (each module depends only on Core + previous module
 | 1 | **Core** | Nothing | ✅ Yes |
 | 2 | **Input** | Core | ✅ Yes |
 | 3 | **Transliteration** | Core | ✅ Yes |
+| 3b | **Candidate Discovery** | Core | ✅ Yes |
 | 4 | **Extraction** | Core | ✅ Yes |
 | 5 | **Research** | Core | ✅ Yes |
 | 6 | **Explanation** | Core | ✅ Yes |
@@ -628,6 +696,7 @@ See the individual module artifacts:
 1. [module_core.md](file:///home/vishal/.gemini/antigravity/brain/6fc54a6d-bcb0-45f0-b3bf-391c5cf405df/module_core.md)
 2. [module_input.md](file:///home/vishal/.gemini/antigravity/brain/6fc54a6d-bcb0-45f0-b3bf-391c5cf405df/module_input.md)
 3. [module_transliteration.md](file:///home/vishal/.gemini/antigravity/brain/6fc54a6d-bcb0-45f0-b3bf-391c5cf405df/module_transliteration.md)
+3b. [module_discovery.md](file:///mnt/78CA356BCA352732/Tamil%20Entity/docs/module_discovery.md)
 4. [module_extraction.md](file:///home/vishal/.gemini/antigravity/brain/6fc54a6d-bcb0-45f0-b3bf-391c5cf405df/module_extraction.md)
 5. [module_research.md](file:///home/vishal/.gemini/antigravity/brain/6fc54a6d-bcb0-45f0-b3bf-391c5cf405df/module_research.md)
 6. [module_explanation.md](file:///home/vishal/.gemini/antigravity/brain/6fc54a6d-bcb0-45f0-b3bf-391c5cf405df/module_explanation.md)

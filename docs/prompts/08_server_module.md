@@ -27,6 +27,7 @@ You are building the **Server Module** for a Tamil Entity Recognition system. Th
    - `backend/config/default_config.yaml` — Full configuration
    - `backend/modules/input/coordinator.py` — InputCoordinator class
    - `backend/modules/transliteration/agent.py` — TransliterationAgent class
+   - `backend/modules/discovery/agent.py` — CandidateDiscoveryAgent class (optional, check if enabled)
    - `backend/modules/extraction/agent.py` — EntityExtractionAgent class
    - `backend/modules/research/agent.py` — EntityResearchAgent class
    - `backend/modules/explanation/agent.py` — ExplanationAgent class
@@ -68,7 +69,7 @@ backend/tests/module/
    - Initialize ALL module agents in constructor
    - `run(request_id, input_type, input_content, input_metadata)` method:
      a. Create initial state via `create_initial_state()`
-     b. Execute each stage in order: Input → Transliteration → Extraction → Research → Explanation → Response
+     b. Execute each stage in order: Input → Transliteration → Discovery (if enabled) → Extraction → Research → Explanation → Response
      c. Time each stage, store in `state['stage_timings']`
      d. Send WebSocket updates at each stage transition
      e. On error: log to `state['errors']`, set `state['processing_status'] = 'failed'`, break pipeline

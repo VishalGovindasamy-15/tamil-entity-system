@@ -30,6 +30,7 @@ You are performing **integration testing** for a Tamil Entity Recognition system
    - `backend/config/` — Settings and YAML configs
    - `backend/modules/input/` — Input processing
    - `backend/modules/transliteration/` — Script detection + transliteration
+   - `backend/modules/discovery/` — Candidate entity discovery
    - `backend/modules/extraction/` — Entity extraction
    - `backend/modules/research/` — Entity research
    - `backend/modules/explanation/` — Explanation generation
@@ -44,6 +45,7 @@ Check that the Pipeline Orchestrator correctly imports and instantiates all agen
 # pipeline/orchestrator.py should import these:
 from modules.input import InputCoordinator
 from modules.transliteration import TransliterationAgent
+from modules.discovery import CandidateDiscoveryAgent
 from modules.extraction import EntityExtractionAgent
 from modules.research import EntityResearchAgent
 from modules.explanation import ExplanationAgent

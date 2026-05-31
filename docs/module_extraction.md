@@ -10,6 +10,7 @@ Extract named entities from normalized Tamil/English text using a **multi-model 
 **Input:**
 ```python
 state['normalized_text']  # From Transliteration module
+state['candidate_entities']  # From Discovery module (list of candidate dicts, may be empty)
 ```
 
 **Output:**
@@ -88,8 +89,9 @@ class EntityExtractionAgent(BaseAgent):
             llm_result = await self.extractors['llm_fallback'].extract(text)
             results.append(llm_result)
         
-        # 3. Merge overlapping entities across models
-        merged = self.merger.merge(results)
+        # 3. Merge overlapping entities across models + discovery candidates
+        candidates = state.get('candidate_entities', [])
+        merged = self.merger.merge(results, candidates)
         
         # 4. Enrich (context, abbreviation expansion)
         enriched = await self._enrich_entities(merged, text, state)
@@ -237,8 +239,8 @@ class LLMExtractor:
 
 ```python
 class EntityMerger:
-    def merge(self, extraction_results: List[Dict]) -> List[Dict]:
-        """Merge entities from multiple extractors"""
+    def merge(self, extraction_results: List[Dict], candidate_entities: List[Dict] = None) -> List[Dict]:
+        """Merge entities from multiple extractors + discovery candidates"""
         
         # 1. Collect all entities with source tags
         all_entities = []
@@ -247,7 +249,20 @@ class EntityMerger:
                 entity['_source'] = result['source']
                 all_entities.append(entity)
         
-        # 2. Group overlapping entities
+        # 2. Add discovery candidates (only those not already found by NER)
+        if candidate_entities:
+            for c in candidate_entities:
+                if not self._already_found(c['text'], all_entities):
+                    all_entities.append({
+                        'text': c['text'],
+                        'type': c.get('candidate_type', 'UNKNOWN'),
+                        'start': c.get('start', -1),
+                        'end': c.get('end', -1),
+                        'confidence': c.get('confidence', 0.4),
+                        '_source': 'discovery',
+                    })
+        
+        # 3. Group overlapping entities
         groups = self._group_overlapping(all_entities)
         
         # 3. For each group, vote on type and average confidence
